@@ -1,4 +1,4 @@
-// prisma/schema.prisma (დამატებული AIComment მოდელი)
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,6 +19,8 @@ model User {
   website     String?
   img         String?
   cover       String?
+  avatarProps String? // ეს არის ახალი ველი BigHeads კონფიგურაციისთვის
+  gender      String? // ეს ველი ასევე შეგიძლიათ დაამატოთ
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

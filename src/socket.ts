@@ -1,10 +1,27 @@
 "use client";
 import { io } from "socket.io-client";
 
-// გამოვიყენებთ იმავე ჰოსტს და პორტს, რაზეც Next.js სერვერი მუშაობს
-export const socket = io("http://localhost:3000", {
+// ვიყენებთ ბრაუზერის მიმდინარე მისამართს, ან ngrok-ის მისამართს თუ იგი ხელმისაწვდომია
+const getSocketUrl = () => {
+  // ხშირად ngrok ისეთ მისამართს იყენებს, რომელიც არ ემთხვევა მიმდინარე window.location.origin-ს
+  // ამიტომ აქ უნდა განვსაზღვროთ ყველა შესაძლო მისამართი, რომელთანაც შევეცდებით დაკავშირებას
+  const ngrokUrl = "https://5d2a-2a00-23c6-731a-4d01-5367-cc94-7ee4-ed7.ngrok-free.app";
+  const localUrl = "http://localhost:3000";
+
+  // თუ ვიმყოფებით ngrok-ის მისამართზე
+  if (typeof window !== "undefined" && window.location.href.includes("ngrok")) {
+    return ngrokUrl;
+  }
+  
+  // სხვა შემთხვევაში ვიყენებთ ან მიმდინარე მისამართს, ან localhost-ს
+  return typeof window !== "undefined" ? window.location.origin : localUrl;
+};
+
+export const socket = io(getSocketUrl(), {
   reconnectionDelayMax: 10000,
-  autoConnect: true
+  autoConnect: true,
+  withCredentials: true, // ეს საჭიროა CORS-ის დროს
+  transports: ['websocket', 'polling'] // ჯერ websocket, მერე polling
 });
 
 // ზარის მოთხოვნის ტიპი
@@ -38,6 +55,10 @@ socket.on("disconnect", () => {
 
 socket.on("connect_error", (error) => {
   console.error("Socket connection error:", error);
+  // შევეცადოთ ხელახლა დაკავშირებას
+  setTimeout(() => {
+    socket.connect();
+  }, 3000);
 });
 
 // მეთოდები ზარების გასაგზავნად

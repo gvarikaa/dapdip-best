@@ -78,8 +78,13 @@ app.prepare().then(() => {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      // დაამატეთ ngrok-ის URL-ი CORS დაშვებებში
+      origin: [
+        "http://localhost:3000", 
+        "https://5d2a-2a00-23c6-731a-4d01-5367-cc94-7ee4-ed7.ngrok-free.app"
+      ],
       methods: ["GET", "POST"],
+      credentials: true
     }
   });
 
@@ -266,5 +271,6 @@ app.prepare().then(() => {
     })
     .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}`);
+      console.log(`> Also accessible via ngrok at your ngrok URL`);
     });
 });

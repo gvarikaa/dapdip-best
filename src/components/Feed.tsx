@@ -8,22 +8,34 @@ const Feed = async ({ userProfileId }: { userProfileId?: string }) => {
 
   if (!userId) return;
 
-  const whereCondition = userProfileId
-    ? { parentPostId: null, userId: userProfileId }
-    : {
-        parentPostId: null,
-        userId: {
-          in: [
-            userId,
-            ...(
-              await prisma.follow.findMany({
-                where: { followerId: userId },
-                select: { followingId: true },
-              })
-            ).map((follow) => follow.followingId),
-          ],
-        },
-      };
+  // მსგავსი ლოგიკა რაც api/posts/route.ts-ში:
+  const followings = await prisma.follow.findMany({
+    where: { followerId: userId },
+    select: { followingId: true },
+  });
+
+  let whereCondition;
+  
+  if (userProfileId) {
+    // მომხმარებლის პროფილზე
+    whereCondition = { parentPostId: null, userId: userProfileId };
+  } else if (followings.length > 0) {
+    // მომხმარებელს ჰყავს followers
+    whereCondition = {
+      parentPostId: null,
+      userId: {
+        in: [
+          userId,
+          ...followings.map((follow) => follow.followingId),
+        ],
+      },
+    };
+  } else {
+    // ახალი მომხმარებლისთვის: ყველა პოსტი ან რამდენიმე ბოლო პოსტი
+    whereCondition = {
+      parentPostId: null,
+    };
+  }
 
   const postIncludeQuery = {
     user: { select: { displayName: true, username: true, img: true } },
@@ -41,7 +53,7 @@ const Feed = async ({ userProfileId }: { userProfileId?: string }) => {
       },
       ...postIncludeQuery,
     },
-    take: 3,
+    take: 15,
     skip: 0,
     orderBy: { createdAt: "desc" },
   });

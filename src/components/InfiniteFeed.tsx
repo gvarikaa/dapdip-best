@@ -5,18 +5,26 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import Post from "./Post";
 
 const fetchPosts = async (pageParam: number, userProfileId?: string) => {
-  const res = await fetch(
-    "http://localhost:3000/api/posts?cursor=" +
-      pageParam +
-      "&user=" +
-      userProfileId
-  );
+  // დინამიური URL გამოყენება ნაცვლად ფიქსირებული მისამართისა
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  
+  const url = new URL(`${baseUrl}/api/posts`);
+  url.searchParams.append("cursor", pageParam.toString());
+  url.searchParams.append("user", userProfileId || "undefined");
+  url.searchParams.append("limit", "10"); // დავამატოთ ლიმიტი
+  
+  const res = await fetch(url.toString());
+  
+  if (!res.ok) {
+    throw new Error("Failed to fetch posts");
+  }
+  
   return res.json();
 };
 
 const InfiniteFeed = ({ userProfileId }: { userProfileId?: string }) => {
   const { data, error, status, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey: ["posts"],
+    queryKey: ["posts", userProfileId], // დავამატოთ userProfileId ქეშის გასაუმჯობესებლად
     queryFn: ({ pageParam = 2 }) => fetchPosts(pageParam, userProfileId),
     initialPageParam: 2,
     getNextPageParam: (lastPage, pages) =>
@@ -25,8 +33,6 @@ const InfiniteFeed = ({ userProfileId }: { userProfileId?: string }) => {
 
   if (error) return "Something went wrong!";
   if (status === "pending") return "Loading...";
-
-  console.log(data);
 
   const allPosts = data?.pages?.flatMap((page) => page.posts) || [];
 

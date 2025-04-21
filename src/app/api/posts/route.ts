@@ -7,56 +7,80 @@ export async function GET(request: NextRequest) {
 
   const userProfileId = searchParams.get("user");
   const page = searchParams.get("cursor");
-  const LIMIT = 3;
+  const limitParam = searchParams.get("limit");
+  
+  // API-დან მიღებული ან ნაგულისხმევი ლიმიტი
+  const LIMIT = limitParam ? parseInt(limitParam) : 15;
 
   const { userId } = await auth();
 
-  if (!userId) return;
+  if (!userId) {
+    return Response.json({ error: "ავტორიზაცია საჭიროა" }, { status: 401 });
+  }
 
-  const whereCondition =
-    userProfileId !== "undefined"
-      ? { parentPostId: null, userId: userProfileId as string }
-      : {
-          parentPostId: null,
-          userId: {
-            in: [
-              userId,
-              ...(
-                await prisma.follow.findMany({
-                  where: { followerId: userId },
-                  select: { followingId: true },
-                })
-              ).map((follow) => follow.followingId),
-            ],
-          },
-        };
+  try {
+    // დავამოწმოთ არის თუ არა მომხმარებელი followings-ში
+    const followings = await prisma.follow.findMany({
+      where: { followerId: userId },
+      select: { followingId: true },
+    });
 
-  const postIncludeQuery = {
-    user: { select: { displayName: true, username: true, img: true } },
-    _count: { select: { likes: true, rePosts: true, comments: true } },
-    likes: { where: { userId: userId }, select: { id: true } },
-    rePosts: { where: { userId: userId }, select: { id: true } },
-    saves: { where: { userId: userId }, select: { id: true } },
-  };
+    // პირობა posts მოსაძებნად
+    let whereCondition;
+    
+    if (userProfileId !== "undefined") {
+      // მომხმარებლის პროფილზე
+      whereCondition = { parentPostId: null, userId: userProfileId as string };
+    } else if (followings.length > 0) {
+      // მომხმარებელს ჰყავს followers
+      whereCondition = {
+        parentPostId: null,
+        userId: {
+          in: [
+            userId,
+            ...followings.map((follow) => follow.followingId),
+          ],
+        },
+      };
+    } else {
+      // ახალი მომხმარებლისთვის: ყველა პოსტი
+      whereCondition = {
+        parentPostId: null,
+      };
+    }
 
-  const posts = await prisma.post.findMany({
-    where: whereCondition,
-    include: {
-      rePost: {
-        include: postIncludeQuery,
+    const postIncludeQuery = {
+      user: { select: { displayName: true, username: true, img: true } },
+      _count: { select: { likes: true, rePosts: true, comments: true } },
+      likes: { where: { userId: userId }, select: { id: true } },
+      rePosts: { where: { userId: userId }, select: { id: true } },
+      saves: { where: { userId: userId }, select: { id: true } },
+    };
+
+    const posts = await prisma.post.findMany({
+      where: whereCondition,
+      include: {
+        rePost: {
+          include: postIncludeQuery,
+        },
+        ...postIncludeQuery,
       },
-      ...postIncludeQuery,
-    },
-    take: LIMIT,
-    skip: (Number(page) - 1) * LIMIT,
-    orderBy: { createdAt: "desc" }
-  });
+      take: LIMIT,
+      skip: (Number(page) - 1) * LIMIT,
+      orderBy: { createdAt: "desc" }
+    });
 
-  const totalPosts = await prisma.post.count({ where: whereCondition });
+    const totalPosts = await prisma.post.count({ where: whereCondition });
 
-  const hasMore = Number(page) * LIMIT < totalPosts;
+    const hasMore = Number(page) * LIMIT < totalPosts;
 
-  // await new Promise((resolve) => setTimeout(resolve, 3000));
+    // დავამატოთ მონაცემები დებაგისთვის
+    console.log(`პოსტების მოძებნა: ${posts.length} პოსტი ნაპოვნია, გვერდი ${page}, ლიმიტი ${LIMIT}`);
+    console.log(`სულ: ${totalPosts} პოსტი, kidev aqvs ${hasMore ? "დიახ" : "არა"}`);
 
-  return Response.json({ posts, hasMore });
+    return Response.json({ posts, hasMore });
+  } catch (error) {
+    console.error("შეცდომა პოსტების ძიებისას:", error);
+    return Response.json({ error: "სერვერის შეცდომა" }, { status: 500 });
+  }
 }
