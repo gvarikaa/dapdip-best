@@ -32,17 +32,20 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 }) => {
   const [parsedProps, setParsedProps] = useState<any>(null);
   
-  // ვცდილობთ JSON-ის პარსინგს
+  // ვცდილობთ JSON-ის პარსინგს და ლოგს ვწერთ დებაგინგისთვის
   useEffect(() => {
     if (avatarProps) {
       try {
         const parsed = JSON.parse(avatarProps);
+        console.log("Parsed avatar props for", username, parsed);
         setParsedProps(parsed);
       } catch (e) {
-        console.error("Error parsing avatarProps JSON:", e);
+        console.error("Error parsing avatarProps JSON for", username, e);
       }
+    } else {
+      console.log("No avatarProps for", username);
     }
-  }, [avatarProps]);
+  }, [avatarProps, username]);
   
   // ზომების კონფიგურაცია
   const sizeConfig = {
@@ -75,16 +78,47 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
     skinTone: 'light',
   };
 
+  // თუ პარსინგი არ გამოვიდა, შევქმნათ მომხმარებლის სახელზე დამოკიდებული seed
+  const generateSeedFromUsername = (name: string) => {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      const char = name.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return hash;
+  };
+
+  // მომხმარებლის სახელიდან უნიკალური პროპების გენერაცია, თუ avatarProps არაა
+  const getSeedBasedProps = () => {
+    const seed = generateSeedFromUsername(username);
+    
+    // სიმარტივისთვის მხოლოდ რამდენიმე თვისებას ვცვლით
+    const hairColors = ['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'] as const;
+    const hairStyles = ['short', 'long', 'bun', 'pixie', 'buzz', 'afro'] as const;
+    const skinTones = ['light', 'brown', 'dark', 'yellow', 'red', 'black'] as const;
+    
+    return {
+      ...defaultProps,
+      hairColor: hairColors[Math.abs(seed) % hairColors.length],
+      hair: hairStyles[Math.abs(seed >> 3) % hairStyles.length],
+      skinTone: skinTones[Math.abs(seed >> 6) % skinTones.length],
+      // თვალის ფერი, ტუჩის ფერი, და ა.შ.
+    };
+  };
+
   return (
     <div className={`relative overflow-hidden rounded-full ${className}`} style={{ width, height: width }}>
       {useBigHeads ? (
         parsedProps ? (
+          // გაპარსული პროპები თუ გვაქვს
           <div className="w-full h-full">
             <BigHead {...defaultProps} {...parsedProps} />
           </div>
         ) : (
+          // მომხმარებლის სახელზე დაფუძნებული პროპები
           <div className="w-full h-full">
-            <BigHead {...defaultProps} />
+            <BigHead {...getSeedBasedProps()} />
           </div>
         )
       ) : (

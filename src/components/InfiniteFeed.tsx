@@ -35,17 +35,23 @@ const InfiniteFeed = ({ userProfileId }: { userProfileId?: string }) => {
   if (status === "pending") return "Loading...";
 
   const allPosts = data?.pages?.flatMap((page) => page.posts) || [];
+  
+  // დუბლიკატების ფილტრაცია ID-ით
+  const uniquePosts = allPosts.filter(
+    (post, index, self) => 
+      index === self.findIndex((p) => p.id === post.id)
+  );
 
   return (
     <InfiniteScroll
-      dataLength={allPosts.length}
+      dataLength={uniquePosts.length}
       next={fetchNextPage}
       hasMore={!!hasNextPage}
       loader={<h1>Posts are loading...</h1>}
       endMessage={<h1>All posts loaded!</h1>}
     >
-      {allPosts.map((post) => (
-        <Post key={post.id} post={post}/>
+      {uniquePosts.map((post, index) => (
+        <Post key={`infinite-${post.id}-${index}`} post={post}/>
       ))}
     </InfiniteScroll>
   );

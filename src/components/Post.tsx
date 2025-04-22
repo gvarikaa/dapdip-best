@@ -72,6 +72,8 @@ const Post = ({
           <ProfileAvatar
             imageUrl={originalPost.user.img}
             username={originalPost.user.username}
+            gender={originalPost.user.gender}
+            avatarProps={originalPost.user.avatarProps}
             size="sm"
           />
         </div>
@@ -92,6 +94,8 @@ const Post = ({
                 <ProfileAvatar
                   imageUrl={originalPost.user.img}
                   username={originalPost.user.username}
+                  gender={originalPost.user.gender}
+                  avatarProps={originalPost.user.avatarProps}
                   size="sm"
                 />
               </div>

@@ -68,10 +68,10 @@ const Feed = async ({ userProfileId }: { userProfileId?: string }) => {
 
   return (
     <div className="">
-      {posts.map((post) => (
-        <div key={post.id}>
-          <Post post={post} />
-        </div>
+      {posts.map((post, index) => (
+  <div key={`feed-${post.id}-${index}`}>
+    <Post post={post} />
+  </div>
       ))}
       <InfiniteFeed userProfileId={userProfileId} />
     </div>
