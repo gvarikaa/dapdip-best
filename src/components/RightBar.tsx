@@ -1,15 +1,17 @@
-// src/components/RightBar.tsx
+// განახლებული src/components/RightBar.tsx
 import Link from "next/link";
 import Search from "./Search";
-import { NewsWidget } from "./News"; 
-import Recommendations from "./Recommendations"; // იმპორტი უკვე განახლებულია
+import { NewsWidget } from "./News";
+import Recommendations from "./Recommendations";
+import TrendingHashtags from "./Hashtags/TrendingHashtags"; // იმპორტირება
 
 const RightBar = () => {
   return (
     <div className="pt-4 flex flex-col gap-4 sticky top-0 h-max">
       <Search />
+      <TrendingHashtags /> {/* დავამატეთ ტრენდული ჰეშთეგების კომპონენტი */}
       <NewsWidget />
-      <Recommendations /> {/* უკვე გამოიყენება განახლებული ვერსია */}
+      <Recommendations />
       <div className="text-textGray text-sm flex gap-x-4 flex-wrap">
         <Link href="/">Terms of Service</Link>
         <Link href="/">Privacy Policy</Link>

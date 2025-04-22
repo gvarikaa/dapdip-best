@@ -78,6 +78,9 @@ model Post {
   discussionSummaries DiscussionSummary[]
 
   analyses PostAnalysis[]
+
+  // დავამატოთ ურთიერთობა ჰეშთეგებთან
+  hashtags PostHashtag[]
 }
 
 model Like {
@@ -204,4 +207,30 @@ model PostAnalysis {
   // მომხმარებელი, რომელმაც მოითხოვა ანალიზი
   requestedBy   User   @relation(fields: [requestedById], references: [id])
   requestedById String
+}
+
+// ჰეშთეგების მოდელი
+model Hashtag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ურთიერთობა პოსტებთან
+  posts PostHashtag[]
+}
+
+// პოსტებისა და ჰეშთეგების დამაკავშირებელი მოდელი (many-to-many)
+model PostHashtag {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // ურთიერთობები
+  postId    Int
+  hashtagId Int
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, hashtagId])
 }

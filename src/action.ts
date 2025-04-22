@@ -6,6 +6,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { UploadResponse } from "imagekit/dist/libs/interfaces";
 import { imagekit } from "./utils";
+import { extractHashtags, saveHashtags } from "./utils/hashtagUtils"; // დავამატეთ ჰეშთეგების უტილიტები
 
 export const followUser = async (targetUserId: string) => {
   const { userId } = await auth();
@@ -29,6 +30,7 @@ export const followUser = async (targetUserId: string) => {
     });
   }
 };
+
 export const likePost = async (postId: number) => {
   const { userId } = await auth();
 
@@ -51,6 +53,7 @@ export const likePost = async (postId: number) => {
     });
   }
 };
+
 export const rePost = async (postId: number) => {
   const { userId } = await auth();
 
@@ -125,12 +128,22 @@ export const addComment = async (
   }
 
   try {
-    await prisma.post.create({
+    // შევქმნათ კომენტარი
+    const newComment = await prisma.post.create({
       data: {
         ...validatedFields.data,
         userId,
       },
     });
+
+    // ამოვიცნოთ და შევინახოთ ჰეშთეგები
+    if (validatedFields.data.desc) {
+      const hashtags = extractHashtags(validatedFields.data.desc as string);
+      if (hashtags.length > 0) {
+        await saveHashtags(newComment.id, hashtags);
+      }
+    }
+
     revalidatePath(`/${username}/status/${postId}`);
     return { success: true, error: false };
   } catch (err) {
@@ -219,7 +232,8 @@ export const addPost = async (
   });
 
   try {
-    await prisma.post.create({
+    // შევქმნათ პოსტი
+    const newPost = await prisma.post.create({
       data: {
         ...validatedFields.data,
         userId,
@@ -228,11 +242,19 @@ export const addPost = async (
         video,
       },
     });
+
+    // ამოვიცნოთ და შევინახოთ ჰეშთეგები, თუ ტექსტი არსებობს
+    if (validatedFields.data.desc) {
+      const hashtags = extractHashtags(validatedFields.data.desc as string);
+      if (hashtags.length > 0) {
+        await saveHashtags(newPost.id, hashtags);
+      }
+    }
+
     revalidatePath(`/`);
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
   }
-  return { success: false, error: true };
 };

@@ -1,4 +1,5 @@
-// src/components/Post.tsx
+"use client"; // დავამატეთ "use client" დირექტივა კომპონენტის დასაწყისში
+
 import { imagekit } from "@/utils";
 import Image from "./Image";
 import PostInfo from "./PostInfo";
@@ -9,13 +10,15 @@ import { Post as PostType } from "@prisma/client";
 import { format } from "timeago.js";
 import FactCheckButton from "./FactCheckButton";
 import ProfileAvatar from "./ProfileAvatar";
+import FormattedText from "./FormattedText";
+import { useRouter } from "next/navigation";
 
 type UserSummary = {
   displayName: string | null;
   username: string;
   img: string | null;
-  gender?: string | null;  // დაამატეთ
-  avatarProps?: string | null;  // დაამატეთ
+  gender?: string | null;  
+  avatarProps?: string | null;  
 };
 
 type Engagement = {
@@ -38,8 +41,12 @@ const Post = ({
   type?: "status" | "comment";
   post: PostWithDetails;
 }) => {
+  const router = useRouter();
   const originalPost = post.rePost || post;
-  console.log("Original Post User:", originalPost.user);
+
+  const navigateToPost = () => {
+    router.push(`/${originalPost.user.username}/status/${originalPost.id}`);
+  };
 
   return (
     <div className="p-4 border-y-[1px] border-borderGray">
@@ -122,37 +129,44 @@ const Post = ({
             <PostInfo />
           </div>
           {/* TEXT & MEDIA */}
-          <Link
-            href={`/${originalPost.user.username}/status/${originalPost.id}`}
+          {/* ტექსტი */}
+          <div 
+            className={`${type === "status" && "text-lg"} cursor-pointer`}
+            onClick={navigateToPost}
           >
-            <p className={`${type === "status" && "text-lg"}`}>
-              {originalPost.desc}
-            </p>
-          </Link>
-          {originalPost.img && (
-            <div className="overflow-hidden">
-              <Image
-                path={originalPost.img}
-                alt=""
-                w={600}
-                h={originalPost.imgHeight || 600}
-                className={originalPost.isSensitive ? "blur-3xl" : ""}
-              />
+            <FormattedText text={originalPost.desc || ""} />
+          </div>
+          
+          {/* მედია - სურათები და ვიდეო */}
+          {(originalPost.img || originalPost.video) && (
+            <div className="cursor-pointer" onClick={navigateToPost}>
+              {originalPost.img && (
+                <div className="overflow-hidden">
+                  <Image
+                    path={originalPost.img}
+                    alt=""
+                    w={600}
+                    h={originalPost.imgHeight || 600}
+                    className={originalPost.isSensitive ? "blur-3xl" : ""}
+                  />
+                </div>
+              )}
+              {originalPost.video && (
+                <div className="rounded-lg overflow-hidden">
+                  <Video
+                    path={originalPost.video}
+                    className={originalPost.isSensitive ? "blur-3xl" : ""}
+                  />
+                </div>
+              )}
             </div>
           )}
-          {originalPost.video && (
-            <div className="rounded-lg overflow-hidden">
-              <Video
-                path={originalPost.video}
-                className={originalPost.isSensitive ? "blur-3xl" : ""}
-              />
-            </div>
-          )}
+          
           {type === "status" && (
             <span className="text-textGray">8:41 PM · Dec 5, 2024</span>
           )}
           
-          {/* დაამატეთ ფაქტების შემოწმების ღილაკი */}
+          {/* დავამატოთ ფაქტების შემოწმების ღილაკი */}
           {originalPost.desc && originalPost.desc.length >= 15 && (
             <div className="mb-2">
               <FactCheckButton 
