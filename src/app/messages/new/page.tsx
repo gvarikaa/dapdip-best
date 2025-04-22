@@ -1,9 +1,11 @@
-// src/app/messages/new/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import NewChat from "@/components/Chat/NewChat";
-import Link from "next/link";
-import Image from "@/components/Image";
+import ModernNewChat from "@/components/Chat/ModernNewChat";
+
+export const metadata = {
+  title: "ახალი საუბარი",
+  description: "დაიწყეთ საუბარი თქვენს კონტაქტებთან",
+};
 
 export default async function NewMessagePage() {
   const { userId } = await auth();
@@ -13,14 +15,8 @@ export default async function NewMessagePage() {
   }
 
   return (
-    <div className="h-screen">
-      <div className="p-4 border-b border-borderGray flex items-center gap-4">
-        <Link href="/messages">
-          <Image path="icons/back.svg" alt="back" w={24} h={24} />
-        </Link>
-        <h1 className="text-xl font-bold">ახალი საუბარი</h1>
-      </div>
-      <NewChat />
+    <div className="h-screen flex flex-col bg-gray-900 w-full">
+      <ModernNewChat />
     </div>
   );
 }

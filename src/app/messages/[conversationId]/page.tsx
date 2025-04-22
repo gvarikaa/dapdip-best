@@ -1,11 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import ChatBox from "@/components/Chat/ChatBox";
-import Link from "next/link";
-import Image from "@/components/Image";
+import ModernChatBox from "@/components/Chat/ModernChatBox";
+import ModernChatHeader from "@/components/Chat/ModernChatHeader";
 import { prisma } from "@/prisma";
-import ConversationParticipants from "@/components/Chat/ConversationParticipants";
-import ChatHeader from "@/components/Chat/ChatHeader";
+import ModernConversationParticipants from "@/components/Chat/ModernConversationParticipants";
 
 export default async function ConversationPage({
   params,
@@ -69,22 +67,26 @@ export default async function ConversationPage({
       chatImage = otherParticipant.user.img;
     }
   }
+
+  // ვაგენერირებთ შემთხვევით ონლაინ სტატუსს (რეალურ აპში ეს მონაცემი API-დან უნდა მოვიდეს)
+  const isOnline = Math.random() > 0.5;
   
   return (
-    <div className="h-screen flex flex-col">
-      <ChatHeader 
+    <div className="h-screen flex flex-col bg-gray-900">
+      <ModernChatHeader 
         conversationId={params.conversationId}
         chatName={chatName || "უცნობი საუბარი"}
         chatImage={chatImage}
         isGroup={conversation.isGroup}
         receiverId={otherParticipant?.userId || ""}
+        isOnline={isOnline}
       />
       
       <div className="flex-1 overflow-hidden flex flex-col">
         <div className="flex-1 overflow-hidden">
-          <ChatBox conversationId={params.conversationId} />
+          <ModernChatBox conversationId={params.conversationId} />
         </div>
-        <ConversationParticipants 
+        <ModernConversationParticipants 
           participants={conversation.participants} 
           isGroup={conversation.isGroup}
           name={conversation.name}

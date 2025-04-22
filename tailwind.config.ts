@@ -24,6 +24,15 @@ export default {
         iconBlue: "#1d9bf0",
         iconGreen: "#00ba7c",
         iconPink: "#f91880",
+        gray: {
+          900: "#121212",
+          800: "#1e1e1e",
+          700: "#2d2d2d",
+        },
+        blue: {
+          600: "#2563eb",
+          500: "#3b82f6",
+        },
       },
     },
   },
