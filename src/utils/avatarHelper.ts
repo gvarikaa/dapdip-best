@@ -22,41 +22,46 @@ export const generateAvatarSeed = (username: string): string => {
   return username;
 };
 
+// განსაზღვრეთ ტიპები ყველა შესაძლო არჩევანისთვის
+type HairStyle = NonNullable<AvatarProps['hair']>;
+type ClothingStyle = NonNullable<AvatarProps['clothing']>;
+type EyeStyle = NonNullable<AvatarProps['eyes']>;
+
 /**
  * განსაზღვრავს გენდერ-სპეციფიურ ოფციებს BigHeads ავატარებისთვის
  */
-export const getGenderSpecificOptions = (gender?: string) => {
+export const getGenderSpecificOptions = (gender?: string | null) => {
   // ნაგულისხმევად მამრობითი
   if (!gender || gender === 'male') {
     return {
-      hairStyles: ['short', 'buzz', 'afro', 'bob', 'bald', 'balding', 'sides'] as AvatarProps['hair'][],
+      hairStyles: ['short', 'buzz', 'afro', 'bob', 'bald', 'balding', 'sides'] as HairStyle[],
       facialHairChance: 0.7, // 70% შანსი წვერის ქონისა
-      clothingStyles: ['shirt', 'dressShirt', 'polo', 'jacket', 'hoodie'] as AvatarProps['clothing'][],
-      eyeStyles: ['normal', 'squint', 'wink', 'happy', 'content', 'excited', 'simple'] as AvatarProps['eyes'][]
+      clothingStyles: ['shirt', 'dressShirt', 'polo', 'jacket', 'hoodie'] as ClothingStyle[],
+      eyeStyles: ['normal', 'squint', 'wink', 'happy', 'content', 'excited', 'simple'] as EyeStyle[]
     };
   }
   
   // მდედრობითი
   if (gender === 'female') {
     return {
-      hairStyles: ['long', 'bun', 'pixie', 'bob', 'straight', 'curly', 'bob'] as AvatarProps['hair'][],
+      hairStyles: ['long', 'bun', 'pixie', 'bob', 'straight', 'curly'] as HairStyle[],
       facialHairChance: 0.01, // 1% შანსი წვერის ქონისა
-      clothingStyles: ['dress', 'shirt', 'dressShirt', 'vneck', 'tankTop'] as AvatarProps['clothing'][],
-      eyeStyles: ['normal', 'wink', 'happy', 'content', 'squint', 'simple'] as AvatarProps['eyes'][]
+      clothingStyles: ['dress', 'shirt', 'dressShirt', 'vneck', 'tankTop'] as ClothingStyle[],
+      eyeStyles: ['normal', 'wink', 'happy', 'content', 'squint', 'simple'] as EyeStyle[]
     };
   }
   
   // არაბინარული ან სხვა
   return {
-    hairStyles: ['short', 'buzz', 'afro', 'bob', 'long', 'bun', 'pixie', 'bob'] as AvatarProps['hair'][],
+    hairStyles: ['short', 'buzz', 'afro', 'bob', 'long', 'bun', 'pixie'] as HairStyle[],
     facialHairChance: 0.3, // 30% შანსი წვერის ქონისა
-    clothingStyles: ['shirt', 'dressShirt', 'vneck', 'polo', 'hoodie'] as AvatarProps['clothing'][],
-    eyeStyles: ['normal', 'squint', 'wink', 'happy', 'content', 'simple'] as AvatarProps['eyes'][]
+    clothingStyles: ['shirt', 'dressShirt', 'vneck', 'polo', 'hoodie'] as ClothingStyle[],
+    eyeStyles: ['normal', 'squint', 'wink', 'happy', 'content', 'simple'] as EyeStyle[]
   };
 };
 
 // სტაბილური შემთხვევითი მნიშვნელობის გენერაცია seed-ის ბაზაზე
-export const getRandomOptions = (seed: string, gender?: string): AvatarProps => {
+export const getRandomOptions = (seed: string, gender?: string | null): AvatarProps => {
   // Seed-დან ვქმნით პსევდო-შემთხვევით რიცხვებს
   const hashCode = (str: string) => {
     let hash = 0;
@@ -68,6 +73,7 @@ export const getRandomOptions = (seed: string, gender?: string): AvatarProps => 
   };
 
   const seedNum = hashCode(seed);
+  
   const getRandom = <T>(arr: T[], seedOffset = 0): T => {
     const n = Math.abs(seedNum + seedOffset) % arr.length;
     return arr[n];
@@ -89,56 +95,57 @@ export const getRandomOptions = (seed: string, gender?: string): AvatarProps => 
   
   // მკაცრად ტიპიზირებული პარამეტრების შერჩევა
   return {
-    accessory: getRandom(['none', 'roundGlasses', 'tinyGlasses', 'shades'], 3) as AvatarProps['accessory'],
+    accessory: getRandom(['none', 'roundGlasses', 'tinyGlasses', 'shades'] as AvatarProps['accessory'][], 3),
     body: gender === 'female' ? 'breasts' : 'chest',
-    circleColor: getRandom(['blue', 'green', 'red', 'yellow'], 5) as AvatarProps['circleColor'],
+    circleColor: getRandom(['blue', 'green', 'red', 'yellow'] as AvatarProps['circleColor'][], 5),
     clothing: getRandom(genderOptions.clothingStyles, 6),
-    clothingColor: getRandom(['blue', 'green', 'red', 'white', 'black'], 7) as AvatarProps['clothingColor'],
-    eyebrows: getRandom(['raised', 'leftLowered', 'serious', 'angry', 'concerned'], 8) as AvatarProps['eyebrows'],
+    clothingColor: getRandom(['blue', 'green', 'red', 'white', 'black'] as AvatarProps['clothingColor'][], 7),
+    eyebrows: getRandom(['raised', 'leftLowered', 'serious', 'angry', 'concerned'] as AvatarProps['eyebrows'][], 8),
     eyes: getRandom(genderOptions.eyeStyles, 9),
     faceMask: false,
-    facialHair: hasFacialHair ? getRandom(['stubble', 'mediumBeard'], 10) as AvatarProps['facialHair'] : 'none',
-    graphic: getRandom(['none', 'react', 'graphQL', 'gatsby', 'vue'], 11) as AvatarProps['graphic'],
+    facialHair: hasFacialHair ? getRandom(['stubble', 'mediumBeard'] as AvatarProps['facialHair'][], 10) : 'none',
+    graphic: getRandom(['none', 'react', 'graphQL', 'gatsby', 'vue'] as AvatarProps['graphic'][], 11),
     hair: hairStyle,
-    hairColor: getRandom(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'], 12) as AvatarProps['hairColor'],
-    hat: getRandom(['none', 'none', 'none', 'beanie', 'turban'], 13) as AvatarProps['hat'], // უმეტესწილად გამოიყენოს "none"
-    hatColor: getRandom(['red', 'blue', 'green', 'white', 'black'], 14) as AvatarProps['hatColor'],
+    hairColor: getRandom(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'] as AvatarProps['hairColor'][], 12),
+    hat: getRandom(['none', 'none', 'none', 'beanie', 'turban'] as AvatarProps['hat'][], 13), // უმეტესწილად გამოიყენოს "none"
+    hatColor: getRandom(['red', 'blue', 'green', 'white', 'black'] as AvatarProps['hatColor'][], 14),
     lashes: gender === 'female' ? true : randomFloat(0, 1, 15) > 0.5,
-    lipColor: getRandom(['red', 'purple', 'pink', 'turqoise'], 16) as AvatarProps['lipColor'],
+    lipColor: getRandom(['red', 'purple', 'pink', 'turqoise'] as AvatarProps['lipColor'][], 16),
     mask: false,
-    mouth: getRandom(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue'], 17) as AvatarProps['mouth'],
-    skinTone: getRandom(['light', 'yellow', 'brown', 'dark', 'red', 'black'], 18) as AvatarProps['skinTone'],
+    mouth: getRandom(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue'] as AvatarProps['mouth'][], 17),
+    skinTone: getRandom(['light', 'yellow', 'brown', 'dark', 'red', 'black'] as AvatarProps['skinTone'][], 18),
   };
 };
 
+// შემთხვევითი არჩევა მასივიდან
+const randomChoice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
 // ექსპორტირებული ფუნქცია შემთხვევითი პარამეტრების მისაღებად
 export const generateRandomBigHeadOptions = (): AvatarProps => {
-  const randomChoice = <T extends string>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-  
   // შემთხვევითი გენდერი
   const gender = randomChoice(['male', 'female', 'nonbinary']);
   const genderOptions = getGenderSpecificOptions(gender);
   
   // შემთხვევითი პარამეტრების გენერაცია
   return {
-    accessory: randomChoice(['none', 'roundGlasses', 'tinyGlasses', 'shades']) as AvatarProps['accessory'],
+    accessory: randomChoice(['none', 'roundGlasses', 'tinyGlasses', 'shades'] as AvatarProps['accessory'][]),
     body: gender === 'female' ? 'breasts' : 'chest',
-    circleColor: randomChoice(['blue', 'green', 'red', 'yellow']) as AvatarProps['circleColor'],
+    circleColor: randomChoice(['blue', 'green', 'red', 'yellow'] as AvatarProps['circleColor'][]),
     clothing: randomChoice(genderOptions.clothingStyles),
-    clothingColor: randomChoice(['blue', 'green', 'red', 'white', 'black']) as AvatarProps['clothingColor'],
-    eyebrows: randomChoice(['raised', 'leftLowered', 'serious', 'angry', 'concerned']) as AvatarProps['eyebrows'],
+    clothingColor: randomChoice(['blue', 'green', 'red', 'white', 'black'] as AvatarProps['clothingColor'][]),
+    eyebrows: randomChoice(['raised', 'leftLowered', 'serious', 'angry', 'concerned'] as AvatarProps['eyebrows'][]),
     eyes: randomChoice(genderOptions.eyeStyles),
     faceMask: false,
-    facialHair: Math.random() < genderOptions.facialHairChance ? randomChoice(['stubble', 'mediumBeard']) as AvatarProps['facialHair'] : 'none',
-    graphic: randomChoice(['none', 'react', 'graphQL', 'gatsby', 'vue']) as AvatarProps['graphic'],
+    facialHair: Math.random() < genderOptions.facialHairChance ? randomChoice(['stubble', 'mediumBeard'] as AvatarProps['facialHair'][]) : 'none',
+    graphic: randomChoice(['none', 'react', 'graphQL', 'gatsby', 'vue'] as AvatarProps['graphic'][]),
     hair: randomChoice(genderOptions.hairStyles),
-    hairColor: randomChoice(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink']) as AvatarProps['hairColor'],
-    hat: Math.random() < 0.3 ? randomChoice(['beanie', 'turban']) as AvatarProps['hat'] : 'none',
-    hatColor: randomChoice(['red', 'blue', 'green', 'white', 'black']) as AvatarProps['hatColor'],
+    hairColor: randomChoice(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'] as AvatarProps['hairColor'][]),
+    hat: Math.random() < 0.3 ? randomChoice(['beanie', 'turban'] as AvatarProps['hat'][]) : 'none',
+    hatColor: randomChoice(['red', 'blue', 'green', 'white', 'black'] as AvatarProps['hatColor'][]),
     lashes: gender === 'female' ? true : Math.random() > 0.5,
-    lipColor: randomChoice(['red', 'purple', 'pink', 'turqoise']) as AvatarProps['lipColor'],
+    lipColor: randomChoice(['red', 'purple', 'pink', 'turqoise'] as AvatarProps['lipColor'][]),
     mask: false,
-    mouth: randomChoice(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue']) as AvatarProps['mouth'],
-    skinTone: randomChoice(['light', 'yellow', 'brown', 'dark', 'red', 'black']) as AvatarProps['skinTone'],
+    mouth: randomChoice(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue'] as AvatarProps['mouth'][]),
+    skinTone: randomChoice(['light', 'yellow', 'brown', 'dark', 'red', 'black'] as AvatarProps['skinTone'][]),
   };
 };

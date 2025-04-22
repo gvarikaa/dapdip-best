@@ -1,11 +1,20 @@
 import { PrismaClient } from '@prisma/client';
+import { generateRandomBigHeadOptions } from '../src/utils/avatarHelper';
 
 const prisma = new PrismaClient();
 
 async function main() {
   // Create 5 users with unique details
   const users = [];
+  
+  // გენდერების სია
+  const genders = ['male', 'female', 'nonbinary', 'male', 'female'];
+  
   for (let i = 1; i <= 5; i++) {
+    // გენერირება შემთხვევითი ავატარის პარამეტრებისა
+    const avatarProps = generateRandomBigHeadOptions();
+    const gender = genders[i-1]; // ავიღოთ შესაბამისი გენდერი სიიდან
+    
     const user = await prisma.user.create({
       data: {
         id: `user${i}`,
@@ -16,12 +25,15 @@ async function main() {
         location: `USA`,
         job: `Developer`,
         website: `google.com`,
+        gender: gender, // დავამატოთ გენდერი
+        avatarProps: JSON.stringify(avatarProps), // შევინახოთ ავატარის პარამეტრები JSON-ად
       },
     });
     users.push(user);
   }
   console.log(`${users.length} users created.`);
 
+  // დანარჩენი კოდი რჩება უცვლელი
   // Create 5 posts for each user
   const posts = [];
   for (let i = 0; i < users.length; i++) {

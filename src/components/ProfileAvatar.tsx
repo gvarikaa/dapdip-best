@@ -1,29 +1,43 @@
+// src/components/ProfileAvatar.tsx
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from "./Image";
 import BigHeadsAvatar from './BigHeadsAvatar';
-import { shouldUseBigHeads, generateAvatarSeed } from '@/utils/avatarHelper';
+import { shouldUseBigHeads } from '@/utils/avatarHelper';
 
 type ProfileAvatarProps = {
   imageUrl: string | null | undefined;
   username: string;
-  gender?: string;
+  gender?: string | null | undefined;
+  avatarProps?: string | null | undefined; // დაამატეთ ეს პარამეტრი
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 };
 
-/**
- * პროფილის ავატარის კომპონენტი - ავტომატურად იყენებს BigHeads
- * როცა მომხმარებელს არ აქვს ატვირთული სურათი
- */
 const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   imageUrl,
   username,
   gender,
+  avatarProps,
   size = 'md',
   className = '',
 }) => {
+  const [parsedProps, setParsedProps] = useState<any>(null);
+  
+  // ცდილობს JSON-ის პარსინგს
+  useEffect(() => {
+    if (avatarProps) {
+      try {
+        const parsed = JSON.parse(avatarProps);
+        setParsedProps(parsed);
+        console.log("Successfully parsed avatarProps:", parsed);
+      } catch (e) {
+        console.error("Error parsing avatarProps JSON:", e);
+      }
+    }
+  }, [avatarProps]);
+  
   // ზომების კონფიგურაცია
   const sizeConfig = {
     sm: { width: 40, height: 40 },
@@ -34,14 +48,36 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   const { width } = sizeConfig[size];
   const useBigHeads = shouldUseBigHeads(imageUrl);
   
+  // დებაგინგისთვის
+  console.log("ProfileAvatar render:", {
+    username,
+    imageUrl,
+    gender,
+    hasAvatarProps: !!avatarProps,
+    avatarPropsLength: avatarProps?.length,
+    parsedProps: !!parsedProps,
+    useBigHeads
+  });
+  
   return (
     <div className={`relative overflow-hidden rounded-full ${className}`} style={{ width, height: width }}>
       {useBigHeads ? (
-        <BigHeadsAvatar 
-          seed={generateAvatarSeed(username)} 
-          gender={gender}
-          size={width}
-        />
+        parsedProps ? (
+          // ავატარის პარამეტრებით
+          <BigHeadsAvatar 
+            seed={username}
+            gender={gender || undefined}
+            avatarProps={parsedProps} // გადავცეთ პარსირებული პარამეტრები
+            size={width}
+          />
+        ) : (
+          // გენერირებული seed-ის საფუძველზე
+          <BigHeadsAvatar 
+            seed={username}
+            gender={gender || undefined}
+            size={width}
+          />
+        )
       ) : (
         <Image
           src={imageUrl || undefined}
