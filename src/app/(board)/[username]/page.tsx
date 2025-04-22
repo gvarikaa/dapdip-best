@@ -3,6 +3,7 @@ import Feed from "@/components/Feed";
 import FollowButton from "@/components/FollowButton";
 import Image from "@/components/Image";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import { ProfileCover } from "@/components/Background"; // ახალი იმპორტი
 import { prisma } from "@/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
@@ -43,12 +44,10 @@ const UserPage = async ({
         <div className="relative w-full">
           {/* COVER */}
           <div className="w-full aspect-[3/1] relative">
-            <Image
-              path={user.cover || "general/noCover.png"}
-              alt=""
-              w={600}
-              h={200}
-              tr={true}
+            {/* ძველი Image კომპონენტის ნაცვლად ვიყენებთ ProfileCover */}
+            <ProfileCover
+              username={user.username}
+              coverUrl={user.cover}
             />
           </div>
           {/* AVATAR */}
@@ -59,6 +58,7 @@ const UserPage = async ({
               gender={user.gender}
               avatarProps={user.avatarProps}
               size="lg"
+              fixedSize={true} // დავამატოთ fixedSize პარამეტრი
               className="w-full h-full"
             />
           </div>
