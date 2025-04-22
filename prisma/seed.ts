@@ -1,7 +1,59 @@
 import { PrismaClient } from '@prisma/client';
-import { generateRandomBigHeadOptions } from '../src/utils/avatarHelper';
+import { getGenderSpecificOptions } from '../src/utils/avatarHelper';
+import { AvatarProps } from '@bigheads/core';
 
 const prisma = new PrismaClient();
+
+function generateAvatarForGender(gender: string): AvatarProps {
+  const genderOptions = getGenderSpecificOptions(gender);
+  
+  // შემთხვევითი არჩევა მასივიდან, ტიპების შენარჩუნებით
+  const randomChoice = <T extends string>(arr: readonly T[]): T => {
+    return arr[Math.floor(Math.random() * arr.length)];
+  };
+  
+  // ავატარის ოფციები - ვუთითებთ მხოლოდ ვალიდურ მნიშვნელობებს
+  const accessory = randomChoice(['none', 'roundGlasses', 'tinyGlasses', 'shades'] as const);
+  const body = gender === 'female' ? 'breasts' : 'chest';
+  const circleColor = 'blue'; // მხოლოდ "blue" ან undefined არის დასაშვები!
+  const clothing = randomChoice(genderOptions.clothingStyles);
+  const clothingColor = randomChoice(['blue', 'green', 'red', 'white', 'black'] as const);
+  const eyebrows = randomChoice(['raised', 'leftLowered', 'serious', 'angry', 'concerned'] as const);
+  const eyes = randomChoice(genderOptions.eyeStyles);
+  const facialHair = gender === 'female' ? 'none' : (Math.random() < 0.7 ? 
+    randomChoice(['stubble', 'mediumBeard'] as const) : 'none');
+  const graphic = randomChoice(['none', 'react', 'graphQL', 'gatsby', 'vue', 'redwood'] as const);
+  const hair = randomChoice(genderOptions.hairStyles);
+  const hairColor = randomChoice(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'] as const);
+  const hat = Math.random() < 0.3 ? randomChoice(['beanie', 'turban'] as const) : 'none';
+  const hatColor = randomChoice(['red', 'blue', 'green', 'white', 'black'] as const);
+  const lashes = gender === 'female' ? true : Math.random() > 0.5;
+  const lipColor = randomChoice(['red', 'purple', 'pink', 'turqoise'] as const);
+  const mouth = randomChoice(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue'] as const);
+  const skinTone = randomChoice(['light', 'yellow', 'brown', 'dark', 'red', 'black'] as const);
+  
+  return {
+    accessory,
+    body,
+    circleColor,
+    clothing,
+    clothingColor,
+    eyebrows,
+    eyes,
+    faceMask: false,
+    facialHair,
+    graphic,
+    hair,
+    hairColor,
+    hat,
+    hatColor,
+    lashes,
+    lipColor,
+    mask: false,
+    mouth,
+    skinTone
+  };
+}
 
 async function main() {
   // Create 5 users with unique details
@@ -11,9 +63,27 @@ async function main() {
   const genders = ['male', 'female', 'nonbinary', 'male', 'female'];
   
   for (let i = 1; i <= 5; i++) {
-    // გენერირება შემთხვევითი ავატარის პარამეტრებისა
-    const avatarProps = generateRandomBigHeadOptions();
-    const gender = genders[i-1]; // ავიღოთ შესაბამისი გენდერი სიიდან
+    // ამ იუზერის გენდერი
+    const gender = genders[i-1];
+    
+    // მიხვდება გენდერს და შემთხვევით აგენერირებს ავატარს ამ გენდერისთვის
+    const avatarProps = generateAvatarForGender(gender);
+    
+    // ცოტა ვარიაცია რომ იყოს, ვცვლით ზოგიერთ პარამეტრს უშუალოდ იუზერის ID-ის მიხედვით
+    avatarProps.hairColor = ['blonde', 'orange', 'black', 'white', 'brown'][i % 5] as any;
+    avatarProps.skinTone = ['light', 'yellow', 'brown', 'dark', 'red'][i % 5] as any;
+    
+    // იუზერისთვის სპეციფიური დეტალები
+    const userSpecifics = [
+      { hair: 'short', eyebrows: 'raised', mouth: 'openSmile' },
+      { hair: 'long', eyebrows: 'leftLowered', mouth: 'lips' },
+      { hair: 'afro', eyebrows: 'serious', mouth: 'serious' },
+      { hair: 'buzz', eyebrows: 'angry', mouth: 'grin' },
+      { hair: 'bun', eyebrows: 'concerned', mouth: 'sad' }
+    ];
+    
+    // დავამატოთ სპეციფიური დეტალები
+    Object.assign(avatarProps, userSpecifics[i-1]);
     
     const user = await prisma.user.create({
       data: {
@@ -25,8 +95,8 @@ async function main() {
         location: `USA`,
         job: `Developer`,
         website: `google.com`,
-        gender: gender, // დავამატოთ გენდერი
-        avatarProps: JSON.stringify(avatarProps), // შევინახოთ ავატარის პარამეტრები JSON-ად
+        gender: gender,
+        avatarProps: JSON.stringify(avatarProps),
       },
     });
     users.push(user);

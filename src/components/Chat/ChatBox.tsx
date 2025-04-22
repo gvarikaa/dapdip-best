@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { socket } from "@/socket";
 import Image from "../Image";
+import ProfileAvatar from "../ProfileAvatar";
 import { format } from "timeago.js";
 import EmojiPicker from "./EmojiPicker";
 import FileUpload from "./FileUpload";
@@ -267,6 +268,15 @@ const ChatBox = ({ conversationId }: { conversationId: string }) => {
                 message.senderId === user?.id ? "justify-end" : "justify-start"
               }`}
             >
+              {message.senderId !== user?.id && (
+                <div className="mr-2">
+                  <ProfileAvatar
+                    imageUrl={message.sender?.img}
+                    username={message.sender?.username || "user"}
+                    size="sm"
+                  />
+                </div>
+              )}
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
                   message.senderId === user?.id

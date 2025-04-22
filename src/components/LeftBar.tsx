@@ -1,64 +1,65 @@
+// src/components/LeftBar.tsx
 import Link from "next/link";
 import Image from "./Image";
 import Socket from "./Socket";
 import Notification from "./Notification";
 import { currentUser } from "@clerk/nextjs/server";
 import Logout from "./Logout";
+import ProfileAvatar from "./ProfileAvatar";
 
 const menuList = [
   {
     id: 1,
     name: "Homepage",
-    link: "/",   // ეს უკვე სწორია
+    link: "/",
     icon: "home.svg",
   },
   {
     id: 2,
     name: "Explore",
-    link: "/explore",  // შეცვალეთ
+    link: "/explore",
     icon: "explore.svg",
   },
-  // ...
   {
     id: 4,
     name: "Messages",
-    link: "/messages",  // შეცვალეთ
+    link: "/messages",
     icon: "message.svg",
   },
   {
     id: 5,
     name: "Bookmarks",
-    link: "/bookmarks",  // შეცვალეთ
+    link: "/bookmarks",
     icon: "bookmark.svg",
   },
   {
     id: 6,
     name: "Jobs",
-    link: "/jobs",  // შეცვალეთ
+    link: "/jobs",
     icon: "job.svg",
   },
   {
     id: 7,
     name: "Communities",
-    link: "/communities",  // შეცვალეთ
+    link: "/communities",
     icon: "community.svg",
   },
   {
     id: 8,
     name: "Premium",
-    link: "/premium",  // შეცვალეთ
+    link: "/premium",
     icon: "logo.svg",
   },
   {
     id: 9,
     name: "Profile",
-    link: "/profile",  // შეცვალეთ
+    link: "/profile",
     icon: "profile.svg",
   },
   {
     id: 10,
     name: "More",
-    link: "/more",  // შეცვალეთ
+    link: "/more",
     icon: "more.svg",
   },
 ];
@@ -119,12 +120,10 @@ const LeftBar = async () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 relative rounded-full overflow-hidden">
-                <Image
-                  src={user?.imageUrl}
-                  alt=""
-                  w={100}
-                  h={100}
-                  tr={true}
+                <ProfileAvatar
+                  imageUrl={user?.imageUrl}
+                  username={user?.username || "user"}
+                  size="sm"
                 />
               </div>
               <div className="hidden xxl:flex flex-col">
@@ -132,8 +131,6 @@ const LeftBar = async () => {
                 <span className="text-sm text-textGray">@{user?.username}</span>
               </div>
             </div>
-            {/* <div className="hidden xxl:block cursor-pointer font-bold">...</div> */}
-            {/* ADD LOGOUT */}
             <Logout/>
           </div>
         </>

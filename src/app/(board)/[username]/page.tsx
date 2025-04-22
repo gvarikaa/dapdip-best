@@ -1,6 +1,8 @@
+// src/app/(board)/[username]/page.tsx
 import Feed from "@/components/Feed";
 import FollowButton from "@/components/FollowButton";
 import Image from "@/components/Image";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import { prisma } from "@/prisma";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
@@ -51,12 +53,13 @@ const UserPage = async ({
           </div>
           {/* AVATAR */}
           <div className="w-1/5 aspect-square rounded-full overflow-hidden border-4 border-black bg-gray-300 absolute left-4 -translate-y-1/2">
-            <Image
-              path={user.img || "general/noAvatar.png"}
-              alt=""
-              w={100}
-              h={100}
-              tr={true}
+            <ProfileAvatar
+              imageUrl={user.img}
+              username={user.username}
+              gender={user.gender}
+              avatarProps={user.avatarProps}
+              size="lg"
+              className="w-full h-full"
             />
           </div>
         </div>

@@ -1,3 +1,4 @@
+// src/components/Post.tsx
 import { imagekit } from "@/utils";
 import Image from "./Image";
 import PostInfo from "./PostInfo";
@@ -7,11 +8,14 @@ import Link from "next/link";
 import { Post as PostType } from "@prisma/client";
 import { format } from "timeago.js";
 import FactCheckButton from "./FactCheckButton";
+import ProfileAvatar from "./ProfileAvatar";
 
 type UserSummary = {
   displayName: string | null;
   username: string;
   img: string | null;
+  gender?: string | null;  // დაამატეთ
+  avatarProps?: string | null;  // დაამატეთ
 };
 
 type Engagement = {
@@ -35,6 +39,7 @@ const Post = ({
   post: PostWithDetails;
 }) => {
   const originalPost = post.rePost || post;
+  console.log("Original Post User:", originalPost.user);
 
   return (
     <div className="p-4 border-y-[1px] border-borderGray">
@@ -64,12 +69,10 @@ const Post = ({
             type === "status" && "hidden"
           } relative w-10 h-10 rounded-full overflow-hidden -z-10`}
         >
-          <Image
-            path={originalPost.user.img || "general/noAvatar.png"}
-            alt=""
-            w={100}
-            h={100}
-            tr={true}
+          <ProfileAvatar
+            imageUrl={originalPost.user.img}
+            username={originalPost.user.username}
+            size="sm"
           />
         </div>
 
@@ -86,12 +89,10 @@ const Post = ({
                   type !== "status" && "hidden"
                 } relative w-10 h-10 rounded-full overflow-hidden`}
               >
-                <Image
-                  path={originalPost.user.img || "general/noAvatar.png"}
-                  alt=""
-                  w={100}
-                  h={100}
-                  tr={true}
+                <ProfileAvatar
+                  imageUrl={originalPost.user.img}
+                  username={originalPost.user.username}
+                  size="sm"
                 />
               </div>
               <div

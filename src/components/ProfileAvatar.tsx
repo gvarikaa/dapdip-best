@@ -3,14 +3,21 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from "./Image";
-import BigHeadsAvatar from './BigHeadsAvatar';
+import dynamic from 'next/dynamic';
 import { shouldUseBigHeads } from '@/utils/avatarHelper';
+import { AvatarProps } from '@bigheads/core';
+
+// დინამიურად ჩავტვირთოთ BigHead კომპონენტი
+const BigHead = dynamic(
+  () => import('@bigheads/core').then(mod => mod.BigHead),
+  { ssr: false }
+);
 
 type ProfileAvatarProps = {
   imageUrl: string | null | undefined;
   username: string;
   gender?: string | null | undefined;
-  avatarProps?: string | null | undefined; // დაამატეთ ეს პარამეტრი
+  avatarProps?: string | null | undefined;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 };
@@ -25,13 +32,12 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 }) => {
   const [parsedProps, setParsedProps] = useState<any>(null);
   
-  // ცდილობს JSON-ის პარსინგს
+  // ვცდილობთ JSON-ის პარსინგს
   useEffect(() => {
     if (avatarProps) {
       try {
         const parsed = JSON.parse(avatarProps);
         setParsedProps(parsed);
-        console.log("Successfully parsed avatarProps:", parsed);
       } catch (e) {
         console.error("Error parsing avatarProps JSON:", e);
       }
@@ -48,35 +54,38 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   const { width } = sizeConfig[size];
   const useBigHeads = shouldUseBigHeads(imageUrl);
   
-  // დებაგინგისთვის
-  console.log("ProfileAvatar render:", {
-    username,
-    imageUrl,
-    gender,
-    hasAvatarProps: !!avatarProps,
-    avatarPropsLength: avatarProps?.length,
-    parsedProps: !!parsedProps,
-    useBigHeads
-  });
-  
+  // საწყისი პარამეტრები BigHead-ისთვის წინასწარ განსაზღვრული ტიპებით
+  const defaultProps: AvatarProps = {
+    accessory: 'none',
+    body: gender === 'female' ? 'breasts' : 'chest',
+    circleColor: 'blue',
+    clothing: 'shirt',
+    clothingColor: 'blue',
+    eyebrows: 'raised',
+    eyes: 'normal',
+    facialHair: 'none',
+    graphic: 'none',
+    hair: gender === 'female' ? 'long' : 'short',
+    hairColor: 'black',
+    hat: 'none',
+    hatColor: 'red',
+    lashes: gender === 'female',
+    lipColor: 'red',
+    mouth: 'serious',
+    skinTone: 'light',
+  };
+
   return (
     <div className={`relative overflow-hidden rounded-full ${className}`} style={{ width, height: width }}>
       {useBigHeads ? (
         parsedProps ? (
-          // ავატარის პარამეტრებით
-          <BigHeadsAvatar 
-            seed={username}
-            gender={gender || undefined}
-            avatarProps={parsedProps} // გადავცეთ პარსირებული პარამეტრები
-            size={width}
-          />
+          <div className="w-full h-full">
+            <BigHead {...defaultProps} {...parsedProps} />
+          </div>
         ) : (
-          // გენერირებული seed-ის საფუძველზე
-          <BigHeadsAvatar 
-            seed={username}
-            gender={gender || undefined}
-            size={width}
-          />
+          <div className="w-full h-full">
+            <BigHead {...defaultProps} />
+          </div>
         )
       ) : (
         <Image

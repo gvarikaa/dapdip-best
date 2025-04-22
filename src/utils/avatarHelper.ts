@@ -60,63 +60,6 @@ export const getGenderSpecificOptions = (gender?: string | null) => {
   };
 };
 
-// სტაბილური შემთხვევითი მნიშვნელობის გენერაცია seed-ის ბაზაზე
-export const getRandomOptions = (seed: string, gender?: string | null): AvatarProps => {
-  // Seed-დან ვქმნით პსევდო-შემთხვევით რიცხვებს
-  const hashCode = (str: string) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      hash = hash & hash; // 32-ბიტიან მთელ რიცხვად გარდაქმნა
-    }
-    return hash;
-  };
-
-  const seedNum = hashCode(seed);
-  
-  const getRandom = <T>(arr: T[], seedOffset = 0): T => {
-    const n = Math.abs(seedNum + seedOffset) % arr.length;
-    return arr[n];
-  };
-
-  const randomFloat = (min: number, max: number, seedOffset = 0) => {
-    const rand = Math.abs(Math.sin(seedNum + seedOffset)) * 10000;
-    return ((rand - Math.floor(rand)) * (max - min)) + min;
-  };
-
-  // გენდერ-სპეციფიური ოფციების მიღება
-  const genderOptions = getGenderSpecificOptions(gender);
-  
-  // თმის სტილი გენდერის მიხედვით
-  const hairStyle = getRandom(genderOptions.hairStyles, 1);
-  
-  // წვერის ქონა-არ ქონა გენდერის მიხედვით
-  const hasFacialHair = randomFloat(0, 1, 2) < genderOptions.facialHairChance;
-  
-  // მკაცრად ტიპიზირებული პარამეტრების შერჩევა
-  return {
-    accessory: getRandom(['none', 'roundGlasses', 'tinyGlasses', 'shades'] as AvatarProps['accessory'][], 3),
-    body: gender === 'female' ? 'breasts' : 'chest',
-    circleColor: getRandom(['blue', 'green', 'red', 'yellow'] as AvatarProps['circleColor'][], 5),
-    clothing: getRandom(genderOptions.clothingStyles, 6),
-    clothingColor: getRandom(['blue', 'green', 'red', 'white', 'black'] as AvatarProps['clothingColor'][], 7),
-    eyebrows: getRandom(['raised', 'leftLowered', 'serious', 'angry', 'concerned'] as AvatarProps['eyebrows'][], 8),
-    eyes: getRandom(genderOptions.eyeStyles, 9),
-    faceMask: false,
-    facialHair: hasFacialHair ? getRandom(['stubble', 'mediumBeard'] as AvatarProps['facialHair'][], 10) : 'none',
-    graphic: getRandom(['none', 'react', 'graphQL', 'gatsby', 'vue'] as AvatarProps['graphic'][], 11),
-    hair: hairStyle,
-    hairColor: getRandom(['blonde', 'orange', 'black', 'white', 'brown', 'blue', 'pink'] as AvatarProps['hairColor'][], 12),
-    hat: getRandom(['none', 'none', 'none', 'beanie', 'turban'] as AvatarProps['hat'][], 13), // უმეტესწილად გამოიყენოს "none"
-    hatColor: getRandom(['red', 'blue', 'green', 'white', 'black'] as AvatarProps['hatColor'][], 14),
-    lashes: gender === 'female' ? true : randomFloat(0, 1, 15) > 0.5,
-    lipColor: getRandom(['red', 'purple', 'pink', 'turqoise'] as AvatarProps['lipColor'][], 16),
-    mask: false,
-    mouth: getRandom(['grin', 'sad', 'openSmile', 'lips', 'open', 'serious', 'tongue'] as AvatarProps['mouth'][], 17),
-    skinTone: getRandom(['light', 'yellow', 'brown', 'dark', 'red', 'black'] as AvatarProps['skinTone'][], 18),
-  };
-};
-
 // შემთხვევითი არჩევა მასივიდან
 const randomChoice = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 

@@ -38,7 +38,15 @@ const Feed = async ({ userProfileId }: { userProfileId?: string }) => {
   }
 
   const postIncludeQuery = {
-    user: { select: { displayName: true, username: true, img: true } },
+    user: { 
+      select: { 
+        displayName: true, 
+        username: true, 
+        img: true,
+        gender: true,      // დავამატოთ გენდერი
+        avatarProps: true  // დავამატოთ ავატარის პარამეტრები
+      } 
+    },
     _count: { select: { likes: true, rePosts: true, comments: true } },
     likes: { where: { userId: userId }, select: { id: true } },
     rePosts: { where: { userId: userId }, select: { id: true } },
