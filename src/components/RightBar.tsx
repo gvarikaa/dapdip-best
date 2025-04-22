@@ -1,15 +1,19 @@
-// განახლებული src/components/RightBar.tsx
+"use client";
+
 import Link from "next/link";
 import Search from "./Search";
 import { NewsWidget } from "./News";
 import Recommendations from "./Recommendations";
 import TrendingHashtags from "./Hashtags/TrendingHashtags"; // იმპორტირება
+import { useUser } from "@clerk/nextjs"; // მომხმარებლის სესიის შესამოწმებლად
 
 const RightBar = () => {
+  const { isSignedIn } = useUser();
+  
   return (
     <div className="pt-4 flex flex-col gap-4 sticky top-0 h-max">
       <Search />
-      <TrendingHashtags /> {/* დავამატეთ ტრენდული ჰეშთეგების კომპონენტი */}
+      <TrendingHashtags /> {/* ტრენდული ჰეშთეგების კომპონენტი */}
       <NewsWidget />
       <Recommendations />
       <div className="text-textGray text-sm flex gap-x-4 flex-wrap">
@@ -23,5 +27,3 @@ const RightBar = () => {
     </div>
   );
 };
-
-export default RightBar;

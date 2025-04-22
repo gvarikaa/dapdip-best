@@ -1,11 +1,9 @@
-// src/components/Recommendations/UserSuggestion.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "../Image";
 import ProfileAvatar from "../ProfileAvatar";
-import { followUser } from "@/action";
 
 export type UserSuggestionType = {
   id: string;
@@ -29,10 +27,27 @@ const UserSuggestion = ({ user, onFollow }: UserSuggestionProps) => {
 
   const handleFollow = async () => {
     setIsLoading(true);
-    await followUser(user.id);
-    setIsFollowing(true);
-    setIsLoading(false);
-    if (onFollow) onFollow();
+    try {
+      // მარტივი API მოთხოვნა followUser ფუნქციისთვის
+      const response = await fetch(`/api/follow`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ targetUserId: user.id }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Follow request failed");
+      }
+      
+      setIsFollowing(true);
+      if (onFollow) onFollow();
+    } catch (error) {
+      console.error("Error following user:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -54,7 +69,7 @@ const UserSuggestion = ({ user, onFollow }: UserSuggestionProps) => {
           </h3>
           <div className="flex flex-col">
             <span className="text-textGray text-xs">@{user.username}</span>
-            {user.mutualFriends && user.mutualFriends > 0 && (
+            {user.mutualFriends !== undefined && user.mutualFriends > 0 && (
               <span className="text-textGray text-xs">
                 {user.mutualFriends} საერთო კონტაქტი
               </span>
