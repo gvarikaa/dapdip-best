@@ -182,6 +182,227 @@ async function main() {
     ],
   });
   console.log('Saved posts created.');
+
+  // ჰეშთეგების შექმნა
+  console.log('Creating hashtags...');
+  const hashtagNames = ['javascript', 'react', 'nextjs', 'typescript', 'coding', 'webdev', 'frontend', 'programming', 'tech', 'development'];
+  
+  const hashtags = [];
+  for (const name of hashtagNames) {
+    const hashtag = await prisma.hashtag.create({
+      data: { name }
+    });
+    hashtags.push(hashtag);
+  }
+  
+  // პოსტების დაკავშირება ჰეშთეგებთან
+  console.log('Linking posts with hashtags...');
+  for (let i = 0; i < posts.length; i++) {
+    // თითოეულ პოსტს დავაკავშიროთ 1-3 შემთხვევით ჰეშთეგთან
+    const hashtagCount = Math.floor(Math.random() * 3) + 1;
+    
+    for (let j = 0; j < hashtagCount; j++) {
+      const randomHashtagIndex = Math.floor(Math.random() * hashtags.length);
+      
+      // ვცადოთ ჰეშთეგის დაკავშირება პოსტთან, თუ უკვე არ არის დაკავშირებული
+      try {
+        await prisma.postHashtag.create({
+          data: {
+            postId: posts[i].id,
+            hashtagId: hashtags[randomHashtagIndex].id
+          }
+        });
+      } catch (error) {
+        // თუ უკვე დაკავშირებულია, გავაგრძელოთ
+        continue;
+      }
+    }
+  }
+  console.log('Post hashtags created.');
+
+  // დავამატოთ კოდი საუბრების (Conversations) შესაქმნელად
+  console.log('Creating conversations...');
+  
+  // შევქმნათ რამდენიმე პირადი საუბარი მომხმარებლებს შორის
+  const privateConversations = [];
+  for (let i = 0; i < users.length; i++) {
+    for (let j = i + 1; j < users.length; j++) {
+      const conversation = await prisma.conversation.create({
+        data: {
+          participants: {
+            create: [
+              { userId: users[i].id },
+              { userId: users[j].id }
+            ]
+          }
+        }
+      });
+      privateConversations.push(conversation);
+    }
+  }
+  
+  // შევქმნათ ერთი ჯგუფური ჩატი ყველა მომხმარებლით
+  const groupConversation = await prisma.conversation.create({
+    data: {
+      name: "პროექტის ჯგუფი",
+      isGroup: true,
+      groupAdminId: users[0].id,
+      participants: {
+        create: users.map(user => ({ userId: user.id }))
+      }
+    }
+  });
+  
+  console.log(`Created ${privateConversations.length} private conversations and 1 group conversation.`);
+  
+  // დავამატოთ მესიჯები საუბრებში
+  console.log('Creating messages...');
+  
+  const messageTemplates = [
+    "გამარჯობა! როგორ ხარ?",
+    "დღეს რას აკეთებ?",
+    "პროექტზე როგორ მიდის საქმე?",
+    "შეგიძლია დამეხმარო ამ საკითხში?",
+    "მადლობა დახმარებისთვის!",
+    "ხვალ რას გეგმავ?",
+    "შეხვედრა ხვალ 15:00-ზე გვაქვს",
+    "დოკუმენტაცია გადავხედე და ძალიან კარგად გამოიყურება",
+    "ნახე ახალი ფუნქციონალი რაც დავამატე",
+    "ვფიქრობ, ეს პრობლემა უკვე გამოვასწორე"
+  ];
+  
+  // დროის გადანაწილება წარსულში მესიჯებისთვის
+  const getRandomPastDate = (daysAgo: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * daysAgo));
+    date.setHours(Math.floor(Math.random() * 24));
+    date.setMinutes(Math.floor(Math.random() * 60));
+    return date;
+  };
+  
+  // პირადი საუბრებისთვის მესიჯები
+  for (const conversation of privateConversations) {
+    const participants = await prisma.conversationParticipant.findMany({
+      where: { conversationId: conversation.id },
+      select: { userId: true }
+    });
+    
+    // თითოეული საუბრისთვის 3-10 შემთხვევითი მესიჯი
+    const messageCount = Math.floor(Math.random() * 8) + 3;
+    
+    // ვქმნით მესიჯებს ამ საუბარში
+    for (let i = 0; i < messageCount; i++) {
+      const sender = participants[i % 2].userId;
+      const messageTemplate = messageTemplates[Math.floor(Math.random() * messageTemplates.length)];
+      const createdAt = getRandomPastDate(30); // ბოლო 30 დღის განმავლობაში
+      const isRead = i % 2 === 0; // ნახევარი წაკითხულია, ნახევარი - არა
+      
+      await prisma.message.create({
+        data: {
+          content: messageTemplate,
+          senderId: sender,
+          conversationId: conversation.id,
+          isRead: isRead,
+          readAt: isRead ? new Date(createdAt.getTime() + 1000 * 60) : null, // წაკითხვიდან 1 წუთის შემდეგ
+          createdAt: createdAt
+        }
+      });
+    }
+  }
+  
+  // ჯგუფური საუბრისთვის მესიჯები
+  for (let i = 0; i < 15; i++) {
+    const sender = users[i % users.length].id;
+    const messageTemplate = `${messageTemplates[i % messageTemplates.length]} #${i + 1}`;
+    const createdAt = getRandomPastDate(15); // ბოლო 15 დღის განმავლობაში
+    
+    await prisma.message.create({
+      data: {
+        content: messageTemplate,
+        senderId: sender,
+        conversationId: groupConversation.id,
+        isRead: true,
+        readAt: new Date(createdAt.getTime() + 1000 * 60 * 2), // 2 წუთის შემდეგ
+        createdAt: createdAt
+      }
+    });
+  }
+  
+  // დავამატოთ რამდენიმე მესიჯი ატაჩმენტებით
+  console.log('Creating messages with attachments...');
+  
+  const attachmentTypes = ['image', 'file', 'pdf', 'doc'];
+  const attachmentUrls = [
+    'https://ik.imagekit.io/demo/sample-image.jpg',
+    'https://ik.imagekit.io/demo/medium_cafe_B1iTdD0C.jpg',
+    'https://ik.imagekit.io/demo/img/sample-image.jpg',
+    'https://ik.imagekit.io/demo/img/tree.jpg'
+  ];
+  
+  // დავამატოთ ატაჩმენტები ჯგუფურ საუბარში
+  for (let i = 0; i < 3; i++) {
+    const sender = users[Math.floor(Math.random() * users.length)].id;
+    const attachmentType = attachmentTypes[i % attachmentTypes.length];
+    const attachmentUrl = attachmentUrls[i % attachmentUrls.length];
+    const createdAt = getRandomPastDate(10);
+    
+    await prisma.message.create({
+      data: {
+        content: `გიგზავნი ${attachmentType} ფაილს`,
+        senderId: sender,
+        conversationId: groupConversation.id,
+        isRead: true,
+        readAt: new Date(createdAt.getTime() + 1000 * 60),
+        createdAt: createdAt,
+        attachmentUrl: attachmentUrl,
+        attachmentType: attachmentType
+      }
+    });
+  }
+  
+  // დავამატოთ ატაჩმენტები რამდენიმე პირად საუბარში
+  for (let i = 0; i < 5; i++) {
+    const conversation = privateConversations[Math.floor(Math.random() * privateConversations.length)];
+    const participants = await prisma.conversationParticipant.findMany({
+      where: { conversationId: conversation.id },
+      select: { userId: true }
+    });
+    
+    const sender = participants[Math.floor(Math.random() * participants.length)].userId;
+    const attachmentType = attachmentTypes[Math.floor(Math.random() * attachmentTypes.length)];
+    const attachmentUrl = attachmentUrls[Math.floor(Math.random() * attachmentUrls.length)];
+    const createdAt = getRandomPastDate(20);
+    
+    await prisma.message.create({
+      data: {
+        content: `ნახე ეს ${attachmentType}`,
+        senderId: sender,
+        conversationId: conversation.id,
+        isRead: Math.random() > 0.5,
+        readAt: Math.random() > 0.5 ? new Date(createdAt.getTime() + 1000 * 60) : null,
+        createdAt: createdAt,
+        attachmentUrl: attachmentUrl,
+        attachmentType: attachmentType
+      }
+    });
+  }
+  
+  console.log('Messages with attachments created.');
+  
+  // ბოლო აქტივობის დროები განვაახლოთ მომხმარებლებისთვის
+  console.log('Updating user activity times...');
+  
+  for (const user of users) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        updatedAt: getRandomPastDate(Math.floor(Math.random() * 5) + 1) // ბოლო 1-5 დღე
+      }
+    });
+  }
+  
+  console.log('User activity times updated.');
+  console.log('Seed completed successfully!');
 }
 
 main()

@@ -34,9 +34,9 @@ const menuList = [
   },
   {
     id: 6,
-    name: "Jobs",
-    link: "/jobs",
-    icon: "job.svg",
+    name: "Better Me",
+    link: "/BetterMe",
+    icon: "betterme.svg",
   },
   {
     id: 7,
