@@ -1,0 +1,441 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id
+  email       String   @unique
+  username    String   @unique
+  displayName String?
+  bio         String?
+  location    String?
+  job         String?
+  website     String?
+  img         String?
+  cover       String?
+  avatarProps String?  @db.Text
+  gender      String? // ეს ველი ასევე შეგიძლიათ დაამატოთ
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // RELATIONS
+  posts Post[]
+
+  likes Like[]
+
+  saves SavedPosts[]
+
+  followers  Follow[] @relation("UserFollowers")
+  followings Follow[] @relation("UserFollowings")
+
+  // მესიჯები და საუბრების მონაწილეები
+  messages                 Message[]
+  conversationParticipants ConversationParticipant[]
+
+  // AI კომენტარის მოთხოვნები
+  aiCommentRequests AIComment[]
+
+  discussionSummaries DiscussionSummary[]
+
+  postAnalyses PostAnalysis[]
+
+  HealthProfile   HealthProfile?
+  AIConsultations AIConsultation[]
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  desc        String?  @db.VarChar(255)
+  img         String?
+  imgHeight   Int?
+  video       String?
+  isSensitive Boolean  @default(false)
+
+  // RELATIONS
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  rePostId Int?
+  rePost   Post?  @relation("RePosts", fields: [rePostId], references: [id])
+  rePosts  Post[] @relation("RePosts")
+
+  parentPostId Int?
+  parentPost   Post?  @relation("PostComments", fields: [parentPostId], references: [id])
+  comments     Post[] @relation("PostComments")
+
+  likes Like[]
+
+  saves SavedPosts[]
+
+  // AI კომენტარები ამ პოსტზე
+  aiComments AIComment[]
+
+  discussionSummaries DiscussionSummary[]
+
+  analyses PostAnalysis[]
+
+  // დავამატოთ ურთიერთობა ჰეშთეგებთან
+  hashtags PostHashtag[]
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // RELATIONS
+  userId String
+  postId Int
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model SavedPosts {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // RELATIONS
+  userId String
+  postId Int
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+}
+
+model Follow {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // RELATIONS
+  followerId  String
+  followingId String
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id])
+  following User @relation("UserFollowings", fields: [followingId], references: [id])
+}
+
+model Conversation {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isGroup      Boolean  @default(false)
+  name         String?
+  groupAdminId String?
+
+  // რელაციები
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  userId         String
+  conversationId String
+  joinedAt       DateTime  @default(now())
+  lastReadAt     DateTime?
+
+  // რელაციები
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, conversationId])
+}
+
+model Message {
+  id             Int       @id @default(autoincrement())
+  content        String    @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  senderId       String
+  conversationId String
+  isRead         Boolean   @default(false)
+  readAt         DateTime?
+  isEdited       Boolean   @default(false)
+  attachmentUrl  String?
+  attachmentType String?
+  replyToId      Int?
+
+  // რელაციები
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+// AI კომენტარების მოდელი
+model AIComment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // რელაციები
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+
+  // მომხმარებელი, რომელმაც მოითხოვა AI-ის კომენტარი
+  requestedBy   User   @relation(fields: [requestedById], references: [id])
+  requestedById String
+}
+
+// AI კომენტარების შეჯამებების მოდელი
+model DiscussionSummary {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // რელაციები
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+
+  // მომხმარებელი, რომელმაც მოითხოვა შეჯამება
+  requestedBy   User   @relation(fields: [requestedById], references: [id])
+  requestedById String
+}
+
+// პოსტის ანალიზის მოდელი
+model PostAnalysis {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  // რელაციები
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+
+  // მომხმარებელი, რომელმაც მოითხოვა ანალიზი
+  requestedBy   User   @relation(fields: [requestedById], references: [id])
+  requestedById String
+}
+
+// ჰეშთეგების მოდელი
+model Hashtag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ურთიერთობა პოსტებთან
+  posts PostHashtag[]
+}
+
+// პოსტებისა და ჰეშთეგების დამაკავშირებელი მოდელი (many-to-many)
+model PostHashtag {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // ურთიერთობები
+  postId    Int
+  hashtagId Int
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, hashtagId])
+}
+
+// მომხმარებლის ჯანმრთელობის პროფილი
+model HealthProfile {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // მომხმარებლის ინფო
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ფიზიკური მახასიათებლები
+  gender       String? // "male", "female", "other"
+  age          Int?
+  height       Float? // სიმაღლე სანტიმეტრებში
+  weight       Float? // წონა კილოგრამებში
+  targetWeight Float? // სამიზნე წონა
+
+  // მიზნები და პრეფერენციები
+  goal             String? // "weight_loss", "muscle_gain", "better_sleep", "more_energy", "skin_health" და ა.შ.
+  timeline         String? // "1_week", "1_month", "3_months"
+  foodRestrictions String? @db.Text // შეზღუდვები საკვებზე JSON ფორმატში ან comma-separated string
+  dislikedFoods    String? @db.Text // არ მოსწონს JSON ფორმატში
+
+  // ჯანმრთელობის სიმპტომები
+  symptoms String? @db.Text // JSON ფორმატში: {"fatigue": true, "headache": false, და ა.შ.}
+
+  // ფიზიკური აქტივობა
+  activityLevel      String? // "sedentary", "light", "moderate", "active", "very_active"
+  exercisePreference String? // "cardio", "strength", "yoga", "no_preference"
+
+  // კავშირები სხვა მოდელებთან
+  plans    WellnessPlan[]
+  progress ProgressLog[]
+}
+
+// გენერირებული ველნეს გეგმა
+model WellnessPlan {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი მომხმარებელთან პროფილის გავლით
+  profileId Int
+  profile   HealthProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // გეგმის დეტალები
+  title       String
+  description String?  @db.Text
+  duration    String // "1_week", "1_month", "3_months"
+  startDate   DateTime
+  endDate     DateTime
+
+  // გეგმის კონტენტი
+  content String @db.LongText // JSON ფორმატში შენახული დეტალური გეგმა
+
+  // კავშირები სხვა მოდელებთან
+  mealPlans     MealPlan[]
+  exercisePlans ExercisePlan[]
+  progress      ProgressLog[]
+}
+
+// კვების გეგმა
+model MealPlan {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი გეგმასთან
+  planId Int
+  plan   WellnessPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  // დეტალები
+  date          DateTime
+  meals         String   @db.LongText // JSON ფორმატში: საუზმე, ლანჩი, ვახშამი, წასახემსებელი
+  calories      Int? // დღიური კალორიები
+  macros        String?  @db.Text // JSON: {"protein": 100, "carbs": 200, "fat": 50}
+  groceryList   String?  @db.Text // JSON: პროდუქტების სია
+  estimatedCost Float? // სავარაუდო ღირებულება
+
+  // კავშირები
+  recipes Recipe[]
+  logs    MealLog[]
+}
+
+// ვარჯიშის გეგმა
+model ExercisePlan {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი გეგმასთან
+  planId Int
+  plan   WellnessPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  // დეტალები
+  date      DateTime
+  exercises String   @db.Text // JSON ფორმატში: ვარჯიშების სია
+  duration  Int? // წუთებში
+  intensity String? // "light", "moderate", "intense"
+
+  // კავშირები
+  logs ExerciseLog[]
+}
+
+// რეცეპტი
+model Recipe {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი კვების გეგმასთან
+  mealPlanId Int
+  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  // რეცეპტის დეტალები
+  name         String
+  description  String? @db.Text
+  ingredients  String  @db.Text // JSON ფორმატში
+  instructions String  @db.Text // JSON ან HTML ფორმატში
+  prepTime     Int? // წუთებში
+  calories     Int?
+  macros       String? @db.Text // JSON: {"protein": 30, "carbs": 40, "fat": 10}
+  imageUrl     String?
+}
+
+// პროგრესის ლოგი
+model ProgressLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირები
+  profileId Int
+  profile   HealthProfile @relation(fields: [profileId], references: [id])
+
+  planId Int?
+  plan   WellnessPlan? @relation(fields: [planId], references: [id])
+
+  // პროგრესის დეტალები
+  date   DateTime
+  weight Float?
+  mood   String? // "great", "good", "neutral", "bad", "terrible"
+  energy Int? // 1-10 შკალაზე
+  sleep  Int? // საათებში
+  notes  String?  @db.Text
+
+  // AI-ს მოტივაციური შეტყობინებები
+  aiMessage String? @db.Text
+}
+
+// კვების დღიური ჩანაწერი
+model MealLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი კვების გეგმასთან
+  mealPlanId Int
+  mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  // დეტალები
+  date      DateTime
+  mealType  String // "breakfast", "lunch", "dinner", "snack"
+  foods     String   @db.Text // JSON ფორმატში
+  completed Boolean  @default(false)
+  calories  Int?
+  notes     String?  @db.Text
+}
+
+// ვარჯიშის დღიური ჩანაწერი
+model ExerciseLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი ვარჯიშის გეგმასთან
+  exercisePlanId Int
+  exercisePlan   ExercisePlan @relation(fields: [exercisePlanId], references: [id], onDelete: Cascade)
+
+  // დეტალები
+  date      DateTime
+  completed Boolean  @default(false)
+  duration  Int? // რეალური ხანგრძლივობა წუთებში
+  feedback  String?  @db.Text
+}
+
+// Better Me კონსულტაციები
+model AIConsultation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // კავშირი მომხმარებელთან
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // კონსულტაციის დეტალები
+  question String  @db.Text
+  answer   String? @db.LongText // გავხადოთ ნებაყოფლობითი, დავამატოთ ?
+  topic    String? // "nutrition", "exercise", "sleep", "general"
+}
